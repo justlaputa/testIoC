@@ -1,11 +1,11 @@
 import container.Container;
 import movielister.*;
 
+import java.util.List;
+
 public class Main {
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
-
         Container container = new Container();
 
         container.registerComponent("MovieLister", MovieLister.class);
@@ -14,8 +14,14 @@ public class Main {
         container.registerInjector(InjectMovieFinder.class, (Injector) container.lookup("MovieFinder"));
         container.registerInjector(InjectMovieFilename.class, new FinderNameInjector());
 
+        container.start();
+
         MovieLister lister = (MovieLister) container.lookup("MovieLister");
 
-        lister.moviesByDirector("director1");
+        List<Movie> movies = lister.moviesByDirector("director1");
+
+        movies.forEach(movie -> {
+            System.out.println(movie.Name);
+        });
     }
 }

@@ -10,20 +10,17 @@ import java.util.Map;
  */
 public class Container {
 
-    private Map<String, Class<?>> componentClassMap;
-
     private Map<String, Object> componentInstanceMap;
 
     private Map<Class<?>, Injector> injectorMap;
 
     public Container() {
-        this.componentClassMap = new HashMap<> ();
         this.componentInstanceMap = new HashMap<> ();
         this.injectorMap = new HashMap<> ();
     }
 
     public void registerComponent(String name, Class<?> clazz) {
-        componentClassMap.put(name, clazz);
+        componentInstanceMap.put(name, createNewComponent(clazz));
     }
 
     public void registerInjector(Class<?> injectorClazz, Injector injector) {
@@ -33,27 +30,19 @@ public class Container {
     public Object lookup(String name) {
         if (componentInstanceMap.containsKey(name)) {
             return componentInstanceMap.get(name);
-        }
-
-        if (componentClassMap.containsKey(name)) {
-            try {
-                return createNewComponent(name);
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-                return null;
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-                return null;
-            }
         } else {
             return null;
         }
     }
 
-    private Object createNewComponent(String name) throws IllegalAccessException, InstantiationException {
-        Class componentClass = componentClassMap.get(name);
+    public void start() {
+        componentInstanceMap.forEach((name, component) ->  {
+            initializeComponent(component);
+        });
+    }
 
-        Object component = componentClass.newInstance();
+    private void initializeComponent(Object component) {
+        Class componentClass = component.getClass();
 
         Class[] interfaces = componentClass.getInterfaces();
 
@@ -63,6 +52,18 @@ public class Container {
 
                 injector.inject(component);
             }
+        }
+    }
+
+    private Object createNewComponent(Class<?> componentClass) {
+
+        Object component = null;
+        try {
+            component = componentClass.newInstance();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
         }
 
         return component;
